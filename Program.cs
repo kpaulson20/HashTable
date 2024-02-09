@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
@@ -19,7 +20,7 @@ class HashTable <TKey, TValue>
     #region HashFunctions
     private int Hash(TKey key, int i) //double hash function
     {
-        return (key.GetHashCode() + i * HashSecond(key)) % capacity;
+        return (Math.Abs(key.GetHashCode() + i * HashSecond(key)) % capacity);
     }
     private int HashSecond(TKey key) //secondary hash function 
     {
@@ -63,12 +64,12 @@ class HashTable <TKey, TValue>
         while (i < capacity)
         {
             int index = Hash(key, i);
-            if (buckets[index].Equals(default((TKey, TValue))))
+            if (index <= buckets.Length) 
             {
                 buckets[index] = new KeyValuePair<TKey, TValue>(key, value);
                 size++;
 
-                if ((double)size / capacity > loadFactor)
+                if (((double)size / capacity) > loadFactor)
                 {
                     resize();
                 }
@@ -86,7 +87,7 @@ class HashTable <TKey, TValue>
         {
             int index = Hash(key, i);
             var pair = buckets[index];
-            if (!pair.Equals(default(KeyValuePair<TKey, TValue>)) && pair.Key.Equals(key))
+            if (pair.Equals(default(KeyValuePair<TKey, TValue>)) && pair.Key.Equals(key))
             {
                 return pair.Value; 
             }
@@ -96,21 +97,25 @@ class HashTable <TKey, TValue>
     }
     #endregion
     #region RemovePair
-    public void remove(TKey key)
+    public string remove(TKey key)
     {
         int i = 0;
         while (i < capacity)
         {
             int index = Hash(key, i);
             var pair = buckets[index];
-            if (!pair.Equals(default(KeyValuePair<TKey, TValue>)) && pair.Key.Equals(key))
+            if (pair.Equals(default(KeyValuePair<TKey, TValue>)))
             {
-                buckets[index] = default(KeyValuePair<TKey, TValue>);
-                size--;
-                return;
+                if (pair.Key != null && pair.Key.Equals(key))
+                {
+                    buckets[index] = default(KeyValuePair<TKey, TValue>);
+                    size--;
+                    return "ID: " + key + " was removed.";
+                }
             }
             i++;
         }
+        return "Key not found";
     }
     #endregion   
     #region ConvertToString
@@ -125,7 +130,7 @@ class HashTable <TKey, TValue>
                 items.Add($"({pair.Key}, {pair.Value})");
             }
         }
-        return "{" + string.Join(", ", items) + "}";
+        return string.Join("\n", items);
     }
     #endregion
 }
@@ -137,9 +142,15 @@ class Program
     {
         var hashTable = new HashTable<string, string>();
 
-        ReadDataFromFile(hashTable, "C:\\Users\\mater\\OneDrive\\Desktop\\DSU\\Advanced Data Structures\\HashTables\\us-contacts.csv");
+        string sCurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        string sFile = System.IO.Path.Combine(sCurrentDirectory, "us-contacts.csv");
+        ReadDataFromFile(hashTable, sFile);
 
-        Console.WriteLine(hashTable);
+        hashTable.Get("17");
+        Console.WriteLine(hashTable.Get("17"));
+
+
+        //Console.WriteLine(hashTable.ToString());
     }
     static void ReadDataFromFile(HashTable<string, string> hashTable, string filepath)
     {
@@ -153,8 +164,12 @@ class Program
                     string[] fields = line.Split(',');
                     if (fields.Length >= 2)
                     {
-                        string key = fields[0].Trim();
-                        string value = fields[1].Trim();
+                        if (fields[8].Trim() == "")
+                        {
+                            Console.WriteLine("--");
+                        }
+                        string key = fields[8].Trim();
+                        string value = string.Join(" ", fields[0].Trim(), fields[1].Trim());
 
                         hashTable.insert(key, value);
                     }
