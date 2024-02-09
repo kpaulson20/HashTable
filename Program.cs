@@ -87,7 +87,7 @@ class HashTable <TKey, TValue>
         {
             int index = Hash(key, i);
             var pair = buckets[index];
-            if (pair.Equals(default(KeyValuePair<TKey, TValue>)) && pair.Key.Equals(key))
+            if (!pair.Equals(default(KeyValuePair<TKey, TValue>)) && pair.Key.Equals(key))
             {
                 return pair.Value; 
             }
@@ -106,18 +106,18 @@ class HashTable <TKey, TValue>
             var pair = buckets[index];
             if (pair.Equals(default(KeyValuePair<TKey, TValue>)))
             {
-                if (pair.Key != null && pair.Key.Equals(key))
+                if (pair.Key != null && pair.Key.Equals(key))  //doesn't enter loop, pair = {null, null}
                 {
                     buckets[index] = default(KeyValuePair<TKey, TValue>);
-                    size--;
-                    return "ID: " + key + " was removed.";
+                    size++;
+                    return "Key-value pair with Key of " + key + " was removed";
                 }
             }
             i++;
         }
         return "Key not found";
     }
-    #endregion   
+    #endregion
     #region ConvertToString
     public override string ToString()
     {
@@ -134,8 +134,6 @@ class HashTable <TKey, TValue>
     }
     #endregion
 }
-
- 
 class Program
 {
     static void Main()
@@ -146,11 +144,11 @@ class Program
         string sFile = System.IO.Path.Combine(sCurrentDirectory, "us-contacts.csv");
         ReadDataFromFile(hashTable, sFile);
 
-        hashTable.Get("17");
-        Console.WriteLine(hashTable.Get("17"));
+        Console.WriteLine(hashTable.Get("17"));  //displays blank line
 
+        Console.WriteLine(hashTable.remove("113").ToString());  //displays error message
 
-        //Console.WriteLine(hashTable.ToString());
+        Console.WriteLine(hashTable.ToString());
     }
     static void ReadDataFromFile(HashTable<string, string> hashTable, string filepath)
     {
